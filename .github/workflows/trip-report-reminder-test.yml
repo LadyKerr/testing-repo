@@ -1,0 +1,57 @@
+# This is a sample workflow that checks a particular issue for a comment
+name: TEST Issue Reminder
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number: 32
+        description: 'Issue number to check'
+        required: true
+jobs:
+  check-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check issue
+        uses: actions/github-script@v4
+        with:
+          script: |
+            // Get the issue number from the workflow input
+            const issueNumber = core.getInput('issue_number');
+
+            // Get the comments from the issue
+            const comments = await github.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber
+            });
+
+            // Define a regex to match the words trip report
+            const tripReportRegex = /trip report/i;
+
+            // Loop through the comments and check for trip report
+            for (const comment of comments.data) {
+              // Get the comment body
+              const body = comment.body;
+
+              // Test if the comment contains the words trip report
+              const hasTripReport = tripReportRegex.test(body);
+
+              // define a comment message 
+              let comment = '';
+
+              // Do something based on the result
+              // If the report is missing, ask for it
+            if (!hasTripReport) {
+              comment = 'Please send the trip report as soon as possible.';
+            } else {
+              // If the report is present, check how long after the event date it was submitted
+              const reportDate = new Date(report);
+              const diff = reportDate - new Date(eventDate);
+
+              // If the report was submitted within a week, thank for it
+              if (diff < 7 * 24 * 60 * 60 * 1000) {
+                comment = 'Thank you for the trip report!';
+              } else {
+                // If the report was submitted after a week, remind to send it sooner next time
+                comment = 'Thank you for the trip report, but please try to send it within a week of the event date next time.';
+              }
+            }
